@@ -1,18 +1,14 @@
 using CloudflareOperator.Clients;
 using CloudflareOperator.Entities;
 using CloudflareOperator.Services;
-using k8s.Models;
 using KubeOps.Abstractions.Finalizer;
-using KubeOps.KubernetesClient;
 
 namespace CloudflareOperator.Finalizers;
 
 internal sealed class V1TunnelFinalizer(
     ApiTokenService apiTokenService,
-    IKubernetesClient client,
     ICloudflareClient cloudflareClient,
-    DnsService dnsService,
-    TunnelDeploymentService tunnelDeploymentService
+    DnsService dnsService
 ) : IEntityFinalizer<V1Tunnel>
 {
     public async Task FinalizeAsync(V1Tunnel entity, CancellationToken cancellationToken)
@@ -29,10 +25,6 @@ internal sealed class V1TunnelFinalizer(
             case TunnelState.MissingTunnel:
                 await DeleteDnsEntries(entity, apiToken, cancellationToken);
 
-                await DeleteConnectionSecret(entity, cancellationToken);
-
-                await tunnelDeploymentService.Delete(entity, entity.Spec.ResourceNamespace, cancellationToken);
-
                 goto case TunnelState.Created;
             case TunnelState.Created:
                 await cloudflareClient.DeleteTunnel(
@@ -45,22 +37,6 @@ internal sealed class V1TunnelFinalizer(
             case TunnelState.Uninitialized:
                 break;
         }
-    }
-
-    private async Task DeleteConnectionSecret(V1Tunnel entity, CancellationToken cancellationToken)
-    {
-        await client.DeleteAsync(
-            new V1Secret
-            {
-                Kind = V1Secret.KubeKind,
-                ApiVersion = V1Secret.KubeApiVersion,
-                Metadata = new V1ObjectMeta
-                {
-                    Name = entity.Name(),
-                    NamespaceProperty = entity.Spec.ResourceNamespace
-                }
-            },
-            cancellationToken);
     }
 
     private async Task DeleteDnsEntries(V1Tunnel entity, string apiToken, CancellationToken cancellationToken)
