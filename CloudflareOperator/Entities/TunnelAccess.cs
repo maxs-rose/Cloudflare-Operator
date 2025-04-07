@@ -12,8 +12,8 @@ public sealed class V1TunnelAccess : CustomKubernetesEntity<V1TunnelAccess.Tunne
     {
         public List<TunnelTarget> Targets { get; set; } = [];
 
-        [Required] public V1SecretKeySelector AcessTokenRef { get; set; }
-        [Required] public V1SecretKeySelector SecretAcessTokenRef { get; set; }
+        [Required] public V1SecretKeySelector AcessTokenRef { get; set; } = null!;
+        [Required] public V1SecretKeySelector SecretAcessTokenRef { get; set; } = null!;
     }
 
     public sealed record TunnelTarget([property: Required] string Name, [property: Required] string Host, [property: Required] int Port);

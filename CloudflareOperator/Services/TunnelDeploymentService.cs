@@ -40,6 +40,7 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
                     }
                 ]
             },
+            Labels,
             cancellationToken);
     }
 
@@ -100,10 +101,45 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
                     }
                 ]
             },
+            new Dictionary<string, string>(Labels)
+            {
+                ["strive.io/access-tunnel"] = name
+            },
+            cancellationToken);
+
+        await client.CreateAsync(new V1Service
+            {
+                Kind = V1Service.KubeKind,
+                ApiVersion = V1Service.KubeApiVersion,
+                Metadata = new V1ObjectMeta
+                {
+                    Name = name,
+                    NamespaceProperty = @namespace,
+                    OwnerReferences = [owner.CreateOwnerReference()],
+                    Labels = Labels
+                },
+                Spec = new V1ServiceSpec
+                {
+                    Type = "ClusterIP",
+                    Ports =
+                    [
+                        new V1ServicePort
+                        {
+                            Name = "acess",
+                            Port = target.Port,
+                            TargetPort = new IntstrIntOrString("acess")
+                        }
+                    ],
+                    Selector = new Dictionary<string, string>(Labels)
+                    {
+                        ["strive.io/access-tunnel"] = name
+                    }
+                }
+            },
             cancellationToken);
     }
 
-    private Task CreateDeployment<T>(T owner, string name, string @namespace, V1Container container, CancellationToken cancellationToken)
+    private Task CreateDeployment<T>(T owner, string name, string @namespace, V1Container container, Dictionary<string, string> labels, CancellationToken cancellationToken)
         where T : IKubernetesObject, IMetadata<V1ObjectMeta>
     {
         return client.SaveAsync(
@@ -116,19 +152,19 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
                     Name = name,
                     NamespaceProperty = @namespace,
                     OwnerReferences = [owner.CreateOwnerReference()],
-                    Labels = Labels
+                    Labels = labels
                 },
                 Spec = new V1DeploymentSpec
                 {
                     Selector = new V1LabelSelector
                     {
-                        MatchLabels = Labels
+                        MatchLabels = labels
                     },
                     Template = new V1PodTemplateSpec
                     {
                         Metadata = new V1ObjectMeta
                         {
-                            Labels = Labels
+                            Labels = labels
                         },
                         Spec = new V1PodSpec
                         {
