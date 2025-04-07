@@ -36,8 +36,6 @@ internal sealed class TunnelController(
             if (!gotToken)
                 return;
 
-            entity = await finalizerAttacher(entity, cancellationToken);
-
             switch (entity.Status.Status)
             {
                 case TunnelState.Uninitialized:
@@ -46,6 +44,8 @@ internal sealed class TunnelController(
                     await CreateTunnel(entity, apiToken, cancellationToken);
 
                     entity = await client.UpdateStatusAsync(entity, cancellationToken);
+                    // Add the finalizer after we have updated the status otherwise we end up with bad times
+                    entity = await finalizerAttacher(entity, cancellationToken);
                     requeue(entity, TimeSpan.FromMilliseconds(10));
                     break;
                 case TunnelState.Created:
