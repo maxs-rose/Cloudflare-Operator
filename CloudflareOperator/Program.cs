@@ -23,6 +23,7 @@ builder.Services
     .AddHostedService<TunnelSecretWatcher>()
     .AddHostedService<TunnelDnsWatcher>()
     .AddHostedService<TunnelDeploymentWatcher>()
+    .AddHostedService<TunnelAccessDeploymentWatcher>()
     .AddSingleton<TunnelDeploymentService>()
     .AddSingleton<ApiTokenService>()
     .AddSingleton<DnsService>()

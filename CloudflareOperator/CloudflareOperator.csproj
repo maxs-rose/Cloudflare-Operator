@@ -14,6 +14,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="KubeOps.Operator" Version="9.3.0"/>
+        <PackageReference Include="KubeOps.Operator.Web" Version="9.3.0"/>
         <PackageReference Include="KubernetesClient" Version="16.0.2"/>
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.3"/>
         <PackageReference Include="Refit" Version="8.0.0"/>

@@ -16,7 +16,7 @@ public sealed class TunnelDeploymentWatcher(
 {
     protected override async Task Watch(CancellationToken cancellationToken)
     {
-        await foreach (var (type, deployment, tunnel) in tunnelDeploymentService.Watch(cancellationToken))
+        await foreach (var (type, deployment, tunnel) in tunnelDeploymentService.WatchTunnel(cancellationToken))
         {
             if (type != WatchEventType.Deleted)
                 continue;

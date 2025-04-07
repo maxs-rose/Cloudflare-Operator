@@ -164,9 +164,8 @@ internal sealed class TunnelController(
     {
         await tunnelDeploymentService.Delete(entity, entity.Spec.ResourceNamespace, cancellationToken);
 
-        await tunnelDeploymentService.Deploy(
+        await tunnelDeploymentService.DeployTunnel(
             entity,
-            TunnelDeploymentService.TunnelKind.Tunnel,
             entity.Spec.ResourceNamespace,
             "cloudflare/cloudflared:2025.2.0",
             new V1SecretKeySelector
