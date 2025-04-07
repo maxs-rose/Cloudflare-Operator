@@ -1,4 +1,5 @@
 using CloudflareOperator.Entities;
+using k8s;
 using k8s.Models;
 using KubeOps.Abstractions.Queue;
 using KubeOps.Abstractions.Rbac;
@@ -16,33 +17,26 @@ internal sealed class TunnelSecretWatcher(
 {
     protected override async Task Watch(CancellationToken cancellationToken)
     {
-        foreach (var tunnel in await GetTunnels(cancellationToken))
+        await foreach (var (kind, entity) in client.WatchAsync<V1Secret>("", labelSelector: "strive.io/operator=cloudflared", cancellationToken: cancellationToken))
         {
-            if (tunnel.Status.Status != TunnelState.Done)
+            if (kind != WatchEventType.Deleted)
                 continue;
 
-            var secret = await GetSecret(tunnel.Name(), tunnel.Spec.ResourceNamespace, cancellationToken);
+            var owner = entity.GetOwnerReference(x => x.Kind.Equals("Tunnel") && x.ApiVersion.Equals("strive.io/v1"));
 
-            if (secret is not null && secret.IsOwnedBy(tunnel))
+            if (owner is null)
                 continue;
 
-            logger.LogInformation("Secret for tunnel {Tunnel} missing", tunnel.Name());
+            //  If the tunnel is deleting just ignore the watch events
+            var tunnel = await client.GetAsync<V1Tunnel>(owner.Name, cancellationToken: cancellationToken);
+            if (tunnel is null || tunnel.Status.Status != TunnelState.Done || tunnel.DeletionTimestamp() is not null)
+                continue;
+
+            logger.LogInformation("Secret for tunnel {Tunnel} deleted, recreating", tunnel.Name());
 
             tunnel.Status.Status = TunnelState.Created;
             var t = await client.UpdateStatusAsync(tunnel, cancellationToken);
             requeue(t, TimeSpan.FromMilliseconds(10));
         }
-
-        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-    }
-
-    private Task<IList<V1Tunnel>> GetTunnels(CancellationToken cancellationToken)
-    {
-        return client.ListAsync<V1Tunnel>(cancellationToken: cancellationToken);
-    }
-
-    private Task<V1Secret?> GetSecret(string name, string @namespace, CancellationToken cancellationToken)
-    {
-        return client.GetAsync<V1Secret>(name, @namespace, cancellationToken);
     }
 }

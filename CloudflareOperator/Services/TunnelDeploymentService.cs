@@ -6,7 +6,7 @@ using KubeOps.KubernetesClient;
 
 namespace CloudflareOperator.Services;
 
-[EntityRbac(typeof(V1Tunnel), Verbs = RbacVerb.List)]
+[EntityRbac(typeof(V1Tunnel), Verbs = RbacVerb.Get)]
 [EntityRbac(typeof(V1Deployment), Verbs = RbacVerb.Create | RbacVerb.Watch | RbacVerb.Delete)]
 public sealed class TunnelDeploymentService(IKubernetesClient client)
 {
@@ -107,9 +107,21 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
             cancellationToken);
     }
 
-    public Task<V1Deployment?> Get<T>(T owner, string @namespace, CancellationToken cancellationToken)
-        where T : IKubernetesObject, IMetadata<V1ObjectMeta>
+    public async IAsyncEnumerable<(WatchEventType Type, V1Deployment Entity, V1Tunnel Tunnel)> Watch(CancellationToken cancellationToken)
     {
-        return client.GetAsync<V1Deployment>(owner.Name(), @namespace, cancellationToken);
+        await foreach (var (kind, deployment) in client.WatchAsync<V1Deployment>("", labelSelector: "strive.io/operator=cloudflared", cancellationToken: cancellationToken))
+        {
+            var owner = deployment.GetOwnerReference(x => x.Kind.Equals("Tunnel") && x.ApiVersion.Equals("strive.io/v1"));
+
+            if (owner is null)
+                continue;
+
+            //  If the tunnel is deleting just ignore the watch events
+            var tunnel = await client.GetAsync<V1Tunnel>(owner.Name, cancellationToken: cancellationToken);
+            if (tunnel is null || tunnel.Status.Status != TunnelState.Done || tunnel.DeletionTimestamp() is not null)
+                continue;
+
+            yield return (kind, deployment, tunnel);
+        }
     }
 }
