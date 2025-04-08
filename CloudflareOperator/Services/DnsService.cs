@@ -2,6 +2,7 @@ using CloudflareOperator.Clients;
 using CloudflareOperator.Clients.Models;
 using CloudflareOperator.Entities;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace CloudflareOperator.Services;
 
@@ -132,7 +133,7 @@ internal sealed class DnsService(
         string accountId,
         string hostname)
     {
-        var domain = string.Join(".", hostname.Split(".").Reverse().Take(2).Reverse());
+        var domain = string.Join(".", hostname.Split(".").AsEnumerable().Reverse().Take(2).Reverse());
 
         return memoryCache.GetOrCreateAsync<string>(domain, async entry =>
         {
@@ -143,7 +144,7 @@ internal sealed class DnsService(
 
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
 
-            return (zones.Result ?? []).FirstOrDefault(z => z.Name.Equals(domain, StringComparison.InvariantCultureIgnoreCase))?.Id ?? string.Empty;
+            return (zones.Result ?? []).FirstOrDefault(z => Equals(domain, StringComparison.InvariantCultureIgnoreCase))?.Id ?? string.Empty;
         })!;
     }
 

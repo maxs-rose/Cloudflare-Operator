@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Hosting;
+
 namespace CloudflareOperator.Watchers;
 
 public abstract class WatcherBase : IHostedService
