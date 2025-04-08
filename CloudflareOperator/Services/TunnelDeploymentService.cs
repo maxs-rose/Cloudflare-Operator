@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using CloudflareOperator.Entities;
 using k8s;
 using k8s.Models;
@@ -10,65 +11,19 @@ namespace CloudflareOperator.Services;
 [EntityRbac(typeof(V1Deployment), Verbs = RbacVerb.Create | RbacVerb.Watch | RbacVerb.Delete)]
 public sealed class TunnelDeploymentService(IKubernetesClient client)
 {
-    public enum TunnelKind
-    {
-        Access,
-        Tunnel
-    }
-
     private static readonly Dictionary<string, string> Labels = new()
     {
         ["strive.io/operator"] = "cloudflared"
     };
 
-    public async Task Deploy<T>(
-        T owner,
-        TunnelKind kind,
-        string @namespace,
-        string image,
-        V1SecretKeySelector connectionSecret,
-        CancellationToken cancellationToken)
+    public async Task DeployTunnel<T>(T owner, string @namespace, string image, V1SecretKeySelector connectionSecret, CancellationToken cancellationToken)
         where T : IKubernetesObject, IMetadata<V1ObjectMeta>
     {
-        await client.SaveAsync(
-            new V1Deployment
-            {
-                Kind = V1Deployment.KubeKind,
-                ApiVersion = $"{V1Deployment.KubeGroup}/{V1Deployment.KubeApiVersion}",
-                Metadata = new V1ObjectMeta
-                {
-                    Name = owner.Name(),
-                    NamespaceProperty = @namespace,
-                    OwnerReferences = [owner.CreateOwnerReference()],
-                    Labels = Labels
-                },
-                Spec = new V1DeploymentSpec
-                {
-                    Selector = new V1LabelSelector
-                    {
-                        MatchLabels = Labels
-                    },
-                    Template = new V1PodTemplateSpec
-                    {
-                        Metadata = new V1ObjectMeta
-                        {
-                            Labels = Labels
-                        },
-                        Spec = new V1PodSpec
-                        {
-                            Containers = [CreatePodSpec(kind, image, connectionSecret)]
-                        }
-                    }
-                }
-            },
-            cancellationToken);
-    }
-
-    private static V1Container CreatePodSpec(TunnelKind kind, string image, V1SecretKeySelector connectionSecret)
-    {
-        return kind switch
-        {
-            TunnelKind.Tunnel => new V1Container
+        await CreateDeployment(
+            owner,
+            owner.Name(),
+            @namespace,
+            new V1Container
             {
                 Name = "tunnel",
                 Image = image,
@@ -85,8 +40,140 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
                     }
                 ]
             },
-            _ => throw new InvalidOperationException($"Unknown Tunnel kind: {kind}")
-        };
+            Labels,
+            cancellationToken);
+    }
+
+    public async Task DeployAccess<T>(
+        T owner,
+        string name,
+        string @namespace,
+        string image,
+        V1TunnelAccess.TunnelTarget target,
+        V1SecretKeySelector tokenRef,
+        V1SecretKeySelector secretTokenRef,
+        CancellationToken cancellationToken)
+        where T : IKubernetesObject, IMetadata<V1ObjectMeta>
+    {
+        await CreateDeployment(
+            owner,
+            name,
+            @namespace,
+            new V1Container
+            {
+                Name = "tunnel",
+                Image = image,
+                Args =
+                [
+                    "access",
+                    "tcp",
+                    $"--hostname={target.Host}",
+                    $"--url=0.0.0.0:{target.Port}",
+                    "--service-token-id=$(SERVICE_TOKEN_ID)",
+                    "--service-token-secret=$(SERVICE_TOKEN_SECRET)"
+                ],
+                Ports =
+                [
+                    new V1ContainerPort
+                    {
+                        Name = "access",
+                        ContainerPort = target.Port,
+                        Protocol = "TCP"
+                    }
+                ],
+                Env =
+                [
+                    new V1EnvVar
+                    {
+                        Name = "SERVICE_TOKEN_ID",
+                        ValueFrom = new V1EnvVarSource
+                        {
+                            SecretKeyRef = tokenRef
+                        }
+                    },
+                    new V1EnvVar
+                    {
+                        Name = "SERVICE_TOKEN_SECRET",
+                        ValueFrom = new V1EnvVarSource
+                        {
+                            SecretKeyRef = secretTokenRef
+                        }
+                    }
+                ]
+            },
+            new Dictionary<string, string>(Labels)
+            {
+                ["strive.io/access-tunnel"] = name
+            },
+            cancellationToken);
+
+        await client.CreateAsync(new V1Service
+            {
+                Kind = V1Service.KubeKind,
+                ApiVersion = V1Service.KubeApiVersion,
+                Metadata = new V1ObjectMeta
+                {
+                    Name = name,
+                    NamespaceProperty = @namespace,
+                    OwnerReferences = [owner.CreateOwnerReference()],
+                    Labels = Labels
+                },
+                Spec = new V1ServiceSpec
+                {
+                    Type = "ClusterIP",
+                    Ports =
+                    [
+                        new V1ServicePort
+                        {
+                            Name = "acess",
+                            Port = target.Port,
+                            TargetPort = new IntstrIntOrString("acess")
+                        }
+                    ],
+                    Selector = new Dictionary<string, string>(Labels)
+                    {
+                        ["strive.io/access-tunnel"] = name
+                    }
+                }
+            },
+            cancellationToken);
+    }
+
+    private Task CreateDeployment<T>(T owner, string name, string @namespace, V1Container container, Dictionary<string, string> labels, CancellationToken cancellationToken)
+        where T : IKubernetesObject, IMetadata<V1ObjectMeta>
+    {
+        return client.SaveAsync(
+            new V1Deployment
+            {
+                Kind = V1Deployment.KubeKind,
+                ApiVersion = $"{V1Deployment.KubeGroup}/{V1Deployment.KubeApiVersion}",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = name,
+                    NamespaceProperty = @namespace,
+                    OwnerReferences = [owner.CreateOwnerReference()],
+                    Labels = labels
+                },
+                Spec = new V1DeploymentSpec
+                {
+                    Selector = new V1LabelSelector
+                    {
+                        MatchLabels = labels
+                    },
+                    Template = new V1PodTemplateSpec
+                    {
+                        Metadata = new V1ObjectMeta
+                        {
+                            Labels = labels
+                        },
+                        Spec = new V1PodSpec
+                        {
+                            Containers = [container]
+                        }
+                    }
+                }
+            },
+            cancellationToken);
     }
 
     public async Task Delete<T>(T owner, string @namespace, CancellationToken cancellationToken)
@@ -107,18 +194,35 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
             cancellationToken);
     }
 
-    public async IAsyncEnumerable<(WatchEventType Type, V1Deployment Entity, V1Tunnel Tunnel)> Watch(CancellationToken cancellationToken)
+    public async IAsyncEnumerable<(WatchEventType Type, V1Deployment Entity, V1Tunnel Tunnel)> WatchTunnel([EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (var entity in Watch<V1Tunnel>("Tunnel", cancellationToken))
+        {
+            if (entity.Tunnel.Status.Status != TunnelState.Done)
+                continue;
+
+            yield return entity;
+        }
+    }
+
+    public IAsyncEnumerable<(WatchEventType Type, V1Deployment Entity, V1TunnelAccess Tunnel)> WatchAccess(CancellationToken cancellationToken)
+    {
+        return Watch<V1TunnelAccess>("TunnelAccess", cancellationToken);
+    }
+
+    private async IAsyncEnumerable<(WatchEventType Type, V1Deployment Entity, T Tunnel)> Watch<T>(string ownerType, [EnumeratorCancellation] CancellationToken cancellationToken)
+        where T : IKubernetesObject<V1ObjectMeta>
     {
         await foreach (var (kind, deployment) in client.WatchAsync<V1Deployment>("", labelSelector: "strive.io/operator=cloudflared", cancellationToken: cancellationToken))
         {
-            var owner = deployment.GetOwnerReference(x => x.Kind.Equals("Tunnel") && x.ApiVersion.Equals("strive.io/v1"));
+            var owner = deployment.GetOwnerReference(x => x.Kind.Equals(ownerType) && x.ApiVersion.Equals("strive.io/v1"));
 
             if (owner is null)
                 continue;
 
             //  If the tunnel is deleting just ignore the watch events
-            var tunnel = await client.GetAsync<V1Tunnel>(owner.Name, cancellationToken: cancellationToken);
-            if (tunnel is null || tunnel.Status.Status != TunnelState.Done || tunnel.DeletionTimestamp() is not null)
+            var tunnel = await client.GetAsync<T>(owner.Name, cancellationToken: cancellationToken);
+            if (tunnel is null || tunnel.DeletionTimestamp() is not null)
                 continue;
 
             yield return (kind, deployment, tunnel);
