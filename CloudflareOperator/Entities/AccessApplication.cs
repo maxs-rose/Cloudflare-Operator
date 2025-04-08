@@ -14,6 +14,9 @@ public sealed class V1AccessApplication : CustomKubernetesEntity<V1AccessApplica
         [Required] public string Name { get; init; } = string.Empty;
         [Required] public ImmutableArray<string> Domains { get; init; }
 
+        [Required] public string AccountId { get; init; } = string.Empty;
+        [Required] public SecretReference ApiToken { get; init; } = null!;
+
         public ImmutableArray<string> AccessPolicies { get; init; } = [];
         public bool VisibleInLauncher { get; init; } = true;
         public string? LogoUrl { get; init; }
