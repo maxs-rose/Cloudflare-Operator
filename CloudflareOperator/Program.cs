@@ -14,8 +14,6 @@ builder.Services.AddSerilog((ctx, configuration) =>
         .ReadFrom.Configuration(builder.Configuration);
 });
 
-builder.Logging.SetMinimumLevel(LogLevel.Trace);
-
 builder.Services
     .AddRefitClient<ICloudflareClient>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri("https://api.cloudflare.com/client/v4"));
@@ -24,6 +22,8 @@ builder.Services
     .AddHostedService<RemoteTunnelWatcher>()
     .AddHostedService<TunnelSecretWatcher>()
     .AddHostedService<TunnelDnsWatcher>()
+    .AddHostedService<TunnelDeploymentWatcher>()
+    .AddSingleton<TunnelDeploymentService>()
     .AddSingleton<ApiTokenService>()
     .AddSingleton<DnsService>()
     .AddMemoryCache()

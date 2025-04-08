@@ -11,7 +11,8 @@ internal sealed class V1TunnelFinalizer(
     ApiTokenService apiTokenService,
     IKubernetesClient client,
     ICloudflareClient cloudflareClient,
-    DnsService dnsService
+    DnsService dnsService,
+    TunnelDeploymentService tunnelDeploymentService
 ) : IEntityFinalizer<V1Tunnel>
 {
     public async Task FinalizeAsync(V1Tunnel entity, CancellationToken cancellationToken)
@@ -25,9 +26,12 @@ internal sealed class V1TunnelFinalizer(
         {
             case TunnelState.Done:
             case TunnelState.MissingDns:
+            case TunnelState.MissingTunnel:
                 await DeleteDnsEntries(entity, apiToken, cancellationToken);
 
                 await DeleteConnectionSecret(entity, cancellationToken);
+
+                await tunnelDeploymentService.Delete(entity, entity.Spec.ResourceNamespace, cancellationToken);
 
                 goto case TunnelState.Created;
             case TunnelState.Created:

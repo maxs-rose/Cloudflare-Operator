@@ -20,6 +20,7 @@ internal sealed class TunnelController(
     ICloudflareClient cloudflareClient,
     ApiTokenService apiTokenService,
     DnsService dnsService,
+    TunnelDeploymentService tunnelDeploymentService,
     EntityRequeue<V1Tunnel> requeue,
     EntityFinalizerAttacher<V1TunnelFinalizer, V1Tunnel> finalizerAttacher
 ) : IEntityController<V1Tunnel>
@@ -62,6 +63,12 @@ internal sealed class TunnelController(
                     entity = await client.UpdateStatusAsync(entity, cancellationToken);
                     requeue(entity, TimeSpan.FromMilliseconds(10));
                     break;
+                case TunnelState.Deploying:
+                    await DeployTunnel(entity, cancellationToken);
+
+                    entity = await client.UpdateStatusAsync(entity, cancellationToken);
+                    requeue(entity, TimeSpan.FromMilliseconds(10));
+                    break;
                 case TunnelState.Done:
                     await dnsService.UpdateTunnelDns(
                         apiToken,
@@ -78,6 +85,12 @@ internal sealed class TunnelController(
                         entity.Spec.AccountId,
                         entity.Spec.Dns.Select(x => (x.Hostname, tunnelHost)).ToList(),
                         cancellationToken);
+
+                    entity.Status.Status = TunnelState.Done;
+                    entity = await client.UpdateStatusAsync(entity, cancellationToken);
+                    break;
+                case TunnelState.MissingTunnel:
+                    await DeployTunnel(entity, cancellationToken);
 
                     entity.Status.Status = TunnelState.Done;
                     entity = await client.UpdateStatusAsync(entity, cancellationToken);
@@ -140,6 +153,27 @@ internal sealed class TunnelController(
                 {
                     ["token"] = apiKey
                 }
+            },
+            cancellationToken);
+
+        entity.Status.Status = TunnelState.Deploying;
+        entity.Status.Messages = [];
+    }
+
+    private async Task DeployTunnel(V1Tunnel entity, CancellationToken cancellationToken)
+    {
+        await tunnelDeploymentService.Delete(entity, entity.Spec.ResourceNamespace, cancellationToken);
+
+        await tunnelDeploymentService.Deploy(
+            entity,
+            TunnelDeploymentService.TunnelKind.Tunnel,
+            entity.Spec.ResourceNamespace,
+            "cloudflare/cloudflared:2025.2.0",
+            new V1SecretKeySelector
+            {
+                Name = entity.Name(),
+                Key = "token",
+                Optional = false
             },
             cancellationToken);
 

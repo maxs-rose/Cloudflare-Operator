@@ -33,6 +33,8 @@ public enum TunnelState
 {
     Uninitialized,
     Created,
+    Deploying,
     Done,
-    MissingDns
+    MissingDns,
+    MissingTunnel
 }
