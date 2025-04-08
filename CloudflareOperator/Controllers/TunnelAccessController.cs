@@ -23,8 +23,8 @@ internal sealed class TunnelAccessController(
                 entity.Namespace(),
                 "cloudflare/cloudflared:2025.2.0",
                 target,
-                entity.Spec.AcessTokenRef,
-                entity.Spec.SecretAcessTokenRef,
+                entity.Spec.AccessTokenRef,
+                entity.Spec.SecretAccessTokenRef,
                 cancellationToken);
     }
 

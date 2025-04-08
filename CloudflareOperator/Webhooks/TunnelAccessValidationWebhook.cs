@@ -24,10 +24,10 @@ public sealed class TunnelAccessValidationWebhook(
 
     private async Task<ValidationResult> Validate(V1TunnelAccess entity, CancellationToken cancellationToken)
     {
-        if (!await SecretExists(entity.Namespace(), entity.Spec.AcessTokenRef, cancellationToken) || !await SecretExists(entity.Namespace(), entity.Spec.SecretAcessTokenRef, cancellationToken))
+        if (!await SecretExists(entity.Namespace(), entity.Spec.AccessTokenRef, cancellationToken) || !await SecretExists(entity.Namespace(), entity.Spec.SecretAccessTokenRef, cancellationToken))
             return Fail("Could not find access screret");
 
-        if (entity.Spec.Targets.Count <= 0)
+        if (entity.Spec.Targets.Length <= 0)
             return Fail("At least one target is required");
 
         return Success();

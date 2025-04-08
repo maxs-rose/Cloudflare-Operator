@@ -107,7 +107,7 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
             },
             cancellationToken);
 
-        await client.CreateAsync(new V1Service
+        await client.SaveAsync(new V1Service
             {
                 Kind = V1Service.KubeKind,
                 ApiVersion = V1Service.KubeApiVersion,
@@ -125,9 +125,9 @@ public sealed class TunnelDeploymentService(IKubernetesClient client)
                     [
                         new V1ServicePort
                         {
-                            Name = "acess",
+                            Name = "access",
                             Port = target.Port,
-                            TargetPort = new IntstrIntOrString("acess")
+                            TargetPort = new IntstrIntOrString("access")
                         }
                     ],
                     Selector = new Dictionary<string, string>(Labels)
