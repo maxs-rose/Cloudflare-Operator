@@ -24,6 +24,13 @@ public sealed class V1AccessApplication : CustomKubernetesEntity<V1AccessApplica
 
     public sealed class AccessApplicationStatus
     {
-        public string ApplicationId { get; init; } = string.Empty;
+        public Status Status { get; set; } = Status.Uninitialized;
+        public string ApplicationId { get; set; } = string.Empty;
     }
+}
+
+public enum Status
+{
+    Uninitialized,
+    Done
 }

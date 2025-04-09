@@ -27,6 +27,7 @@ builder.Services
     .AddHostedService<TunnelDeploymentWatcher>()
     .AddHostedService<TunnelAccessDeploymentWatcher>()
     .AddHostedService<TunnelAccessServiceWatcher>()
+    .AddHostedService<RemoteAccessApplicationWatcher>()
     .AddSingleton<TunnelDeploymentService>()
     .AddSingleton<ApiTokenService>()
     .AddSingleton<DnsService>()

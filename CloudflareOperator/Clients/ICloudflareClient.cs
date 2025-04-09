@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 using CloudflareOperator.Clients.Models;
 using Refit;
 
@@ -16,6 +18,39 @@ public interface ICloudflareClient
         CancellationToken cancellationToken = default);
 
     #endregion Zone
+
+    #region Application
+
+    [Post("/accounts/{AccountId}/access/apps")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> CreateApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [Body] CreateApplication request,
+        CancellationToken cancellationToken = default);
+
+    [Put("/accounts/{AccountId}/access/apps/{ApplicationId}")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> UpdateApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [AliasAs("ApplicationId")] string applicationId,
+        [Body] CreateApplication request,
+        CancellationToken cancellationToken = default);
+
+    [Get("/accounts/{AccountId}/access/apps/{ApplicationId}")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> GetApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [AliasAs("ApplicationId")] string applicationId,
+        CancellationToken cancellationToken = default);
+
+    [Delete("/accounts/{AccountId}/access/apps/{ApplicationId}")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> DeleteApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [AliasAs("ApplicationId")] string applicationId,
+        CancellationToken cancellationToken = default);
+
+    #endregion Application
 
     #region Dns
 
@@ -92,6 +127,37 @@ public interface ICloudflareClient
         CancellationToken cancellationToken = default);
 
     #endregion
+}
+
+public sealed record CreateApplication(
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("domain")] string Domain)
+{
+    [JsonPropertyName("type")] public string Type { get; init; } = "self_hosted";
+
+    [JsonPropertyName("app_launcher_visible")]
+    public bool AppLauncherVisible { get; init; }
+
+    [JsonPropertyName("logo_url")] public string? LogoUrl { get; init; }
+    [JsonPropertyName("destinations")] public ImmutableArray<ApplicationDestination>? Destinations { get; init; }
+}
+
+public sealed record Application(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("domain")] string Domain,
+    [property: JsonPropertyName("type")] string Type)
+{
+    [JsonPropertyName("app_launcher_visible")]
+    public bool AppLauncherVisible { get; init; }
+
+    [JsonPropertyName("logo_url")] public string? LogoUrl { get; init; }
+    [JsonPropertyName("destinations")] public ImmutableArray<ApplicationDestination>? Destinations { get; init; }
+}
+
+public sealed record ApplicationDestination([property: JsonPropertyName("uri")] string Uri)
+{
+    [JsonPropertyName("type")] public string Type { get; init; } = "public";
 }
 
 public static class IApiResponseExtensions
