@@ -14,4 +14,5 @@ public sealed record Application(
 
     [JsonPropertyName("logo_url")] public string? LogoUrl { get; init; }
     [JsonPropertyName("destinations")] public ImmutableArray<ApplicationDestination>? Destinations { get; init; }
+    [JsonPropertyName("policies")] public ImmutableArray<ApplicationAccessPolicy>? Policies { get; init; }
 }

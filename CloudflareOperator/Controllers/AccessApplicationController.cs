@@ -20,6 +20,7 @@ internal sealed class AccessApplicationController(
     IKubernetesClient client,
     ICloudflareClient cloudflareClient,
     ApiTokenService apiTokenService,
+    PolicyService policyService,
     EntityRequeue<V1AccessApplication> requeue,
     EntityFinalizerAttacher<V1AccessApplicationFinalizer, V1AccessApplication> finalizerAttacher
 ) : IEntityController<V1AccessApplication>
@@ -71,7 +72,8 @@ internal sealed class AccessApplicationController(
                 {
                     AppLauncherVisible = entity.Spec.VisibleInLauncher,
                     LogoUrl = entity.Spec.LogoUrl,
-                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray()
+                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray(),
+                    Policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies)
                 },
                 cancellationToken)
             .GetResponseContent();
@@ -91,6 +93,8 @@ internal sealed class AccessApplicationController(
     {
         var (primaryDomain, domains) = entity.Spec.Domains;
 
+        var policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies);
+
         var application = await cloudflareClient.UpdateApplication(
                 apiToken,
                 entity.Spec.AccountId,
@@ -99,7 +103,8 @@ internal sealed class AccessApplicationController(
                 {
                     AppLauncherVisible = entity.Spec.VisibleInLauncher,
                     LogoUrl = entity.Spec.LogoUrl,
-                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray()
+                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray(),
+                    Policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies)
                 },
                 cancellationToken)
             .GetResponseContent();

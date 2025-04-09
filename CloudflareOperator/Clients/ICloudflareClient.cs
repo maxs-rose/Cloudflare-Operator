@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 using CloudflareOperator.Clients.Models;
 using Refit;
 
@@ -16,6 +18,19 @@ public interface ICloudflareClient
         CancellationToken cancellationToken = default);
 
     #endregion Zone
+
+    #region Policy
+
+    // https://developers.cloudflare.com/api/resources/zero_trust/subresources/access/subresources/policies/
+
+    [Get("/accounts/{AccountId}/access/policies")]
+    Task<IApiResponse<ResponseEnvelope<ImmutableArray<Policy>?>>> GetPolicies(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [Query] [AliasAs("page")] int page,
+        CancellationToken cancellationToken = default);
+
+    #endregion Policy
 
     #region Application
 
@@ -53,7 +68,6 @@ public interface ICloudflareClient
     #region Dns
 
     // https://developers.cloudflare.com/api/resources/dns/subresources/records/
-
     [Post("/zones/{ZoneId}/dns_records")]
     Task CreateDnsRecord(
         [Header("Authorization")] string authToken,
@@ -126,6 +140,10 @@ public interface ICloudflareClient
 
     #endregion
 }
+
+public sealed record Policy(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("name")] string Name);
 
 public static class IApiResponseExtensions
 {

@@ -31,6 +31,7 @@ builder.Services
     .AddSingleton<TunnelDeploymentService>()
     .AddSingleton<ApiTokenService>()
     .AddSingleton<DnsService>()
+    .AddSingleton<PolicyService>()
     .AddMemoryCache()
     .AddKubernetesOperator()
     .RegisterComponents();

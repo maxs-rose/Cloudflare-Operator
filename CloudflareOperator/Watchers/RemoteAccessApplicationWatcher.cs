@@ -1,4 +1,5 @@
 using CloudflareOperator.Clients;
+using CloudflareOperator.Clients.Models;
 using CloudflareOperator.Entities;
 using CloudflareOperator.Services;
 using k8s.Models;
@@ -15,6 +16,7 @@ internal sealed class RemoteAccessApplicationWatcher(
     IKubernetesClient client,
     ApiTokenService apiTokenService,
     ICloudflareClient cloudflareClient,
+    PolicyService policyService,
     EntityRequeue<V1AccessApplication> requeue
 ) : WatcherBase
 {
@@ -35,7 +37,12 @@ internal sealed class RemoteAccessApplicationWatcher(
 
             // Application exists
             if (remoteApplication is { Success: true, Result: not null })
+            {
+                if (!await HasCorrectPolicies(apiToken, application, remoteApplication.Result))
+                    requeue(application, TimeSpan.FromMilliseconds(10));
+
                 continue;
+            }
 
             // 11021 = Application does not exist
             if ((remoteApplication?.Errors ?? []).Any(x => x.Code == 11021))
@@ -54,6 +61,22 @@ internal sealed class RemoteAccessApplicationWatcher(
         }
 
         await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+    }
+
+    private async Task<bool> HasCorrectPolicies(string apiToken, V1AccessApplication entity, Application application)
+    {
+        if (entity.Spec.AccessPolicies.Length == 0)
+            return true;
+
+        if (application.Policies?.Length != entity.Spec.AccessPolicies.Length)
+        {
+            logger.LogInformation("Applications policies missing, expected {@Expected}, got {@Got}", entity.Spec.AccessPolicies, application.Policies);
+            return false;
+        }
+
+        var policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies);
+
+        return policies.SequenceEqual(application.Policies.Value.Select(x => x.Id));
     }
 
     private Task<IList<V1AccessApplication>> ListApplications(CancellationToken cancellationToken)
