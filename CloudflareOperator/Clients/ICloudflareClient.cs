@@ -17,6 +17,39 @@ public interface ICloudflareClient
 
     #endregion Zone
 
+    #region Application
+
+    [Post("/accounts/{AccountId}/access/apps")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> CreateApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [Body] CreateApplication request,
+        CancellationToken cancellationToken = default);
+
+    [Put("/accounts/{AccountId}/access/apps/{ApplicationId}")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> UpdateApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [AliasAs("ApplicationId")] string applicationId,
+        [Body] CreateApplication request,
+        CancellationToken cancellationToken = default);
+
+    [Get("/accounts/{AccountId}/access/apps/{ApplicationId}")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> GetApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [AliasAs("ApplicationId")] string applicationId,
+        CancellationToken cancellationToken = default);
+
+    [Delete("/accounts/{AccountId}/access/apps/{ApplicationId}")]
+    Task<IApiResponse<ResponseEnvelope<Application>>> DeleteApplication(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [AliasAs("ApplicationId")] string applicationId,
+        CancellationToken cancellationToken = default);
+
+    #endregion Application
+
     #region Dns
 
     // https://developers.cloudflare.com/api/resources/dns/subresources/records/
