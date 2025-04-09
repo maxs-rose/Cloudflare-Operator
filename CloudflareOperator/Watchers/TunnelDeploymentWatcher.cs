@@ -4,7 +4,6 @@ using k8s;
 using k8s.Models;
 using KubeOps.Abstractions.Queue;
 using KubeOps.KubernetesClient;
-using Microsoft.Extensions.Logging;
 
 namespace CloudflareOperator.Watchers;
 

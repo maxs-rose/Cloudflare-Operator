@@ -9,7 +9,6 @@ using KubeOps.Abstractions.Finalizer;
 using KubeOps.Abstractions.Queue;
 using KubeOps.Abstractions.Rbac;
 using KubeOps.KubernetesClient;
-using Microsoft.Extensions.Logging;
 
 namespace CloudflareOperator.Controllers;
 

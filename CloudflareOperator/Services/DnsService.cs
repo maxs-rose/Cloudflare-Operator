@@ -2,7 +2,6 @@ using CloudflareOperator.Clients;
 using CloudflareOperator.Clients.Models;
 using CloudflareOperator.Entities;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 
 namespace CloudflareOperator.Services;
 

@@ -2,8 +2,6 @@ using CloudflareOperator.Clients;
 using CloudflareOperator.Services;
 using CloudflareOperator.Watchers;
 using KubeOps.Operator;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Refit;
 using Serilog;
 

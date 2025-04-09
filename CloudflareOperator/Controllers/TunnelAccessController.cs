@@ -3,7 +3,6 @@ using CloudflareOperator.Services;
 using k8s.Models;
 using KubeOps.Abstractions.Controller;
 using KubeOps.Abstractions.Rbac;
-using Microsoft.Extensions.Logging;
 
 namespace CloudflareOperator.Controllers;
 
