@@ -76,7 +76,7 @@ internal sealed class RemoteAccessApplicationWatcher(
 
         var policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies);
 
-        return policies.SequenceEqual(application.Policies.Value.Select(x => x.Id));
+        return policies.SequenceEqual(application.Policies.Value.OrderBy(x => x.Precedence).Select(x => x.Id));
     }
 
     private Task<IList<V1AccessApplication>> ListApplications(CancellationToken cancellationToken)
