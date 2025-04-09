@@ -32,6 +32,8 @@ public interface ICloudflareClient
     #endregion Policy
 
     #region Application
+    
+    // https://developers.cloudflare.com/api/resources/zero_trust/subresources/access/subresources/applications/
 
     [Post("/accounts/{AccountId}/access/apps")]
     Task<IApiResponse<ResponseEnvelope<Application>>> CreateApplication(
