@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-using System.Text.Json.Serialization;
 using CloudflareOperator.Clients.Models;
 using Refit;
 
@@ -127,37 +125,6 @@ public interface ICloudflareClient
         CancellationToken cancellationToken = default);
 
     #endregion
-}
-
-public sealed record CreateApplication(
-    [property: JsonPropertyName("name")] string Name,
-    [property: JsonPropertyName("domain")] string Domain)
-{
-    [JsonPropertyName("type")] public string Type { get; init; } = "self_hosted";
-
-    [JsonPropertyName("app_launcher_visible")]
-    public bool AppLauncherVisible { get; init; }
-
-    [JsonPropertyName("logo_url")] public string? LogoUrl { get; init; }
-    [JsonPropertyName("destinations")] public ImmutableArray<ApplicationDestination>? Destinations { get; init; }
-}
-
-public sealed record Application(
-    [property: JsonPropertyName("id")] string Id,
-    [property: JsonPropertyName("name")] string Name,
-    [property: JsonPropertyName("domain")] string Domain,
-    [property: JsonPropertyName("type")] string Type)
-{
-    [JsonPropertyName("app_launcher_visible")]
-    public bool AppLauncherVisible { get; init; }
-
-    [JsonPropertyName("logo_url")] public string? LogoUrl { get; init; }
-    [JsonPropertyName("destinations")] public ImmutableArray<ApplicationDestination>? Destinations { get; init; }
-}
-
-public sealed record ApplicationDestination([property: JsonPropertyName("uri")] string Uri)
-{
-    [JsonPropertyName("type")] public string Type { get; init; } = "public";
 }
 
 public static class IApiResponseExtensions

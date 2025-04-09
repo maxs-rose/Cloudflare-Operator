@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using CloudflareOperator.Clients;
+using CloudflareOperator.Clients.Models;
 using CloudflareOperator.Entities;
 using CloudflareOperator.Extensions;
 using CloudflareOperator.Finalizers;
