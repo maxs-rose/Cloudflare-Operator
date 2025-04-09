@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Text.Json.Serialization;
 using CloudflareOperator.Clients.Models;
 using Refit;
 
@@ -68,6 +67,7 @@ public interface ICloudflareClient
     #region Dns
 
     // https://developers.cloudflare.com/api/resources/dns/subresources/records/
+
     [Post("/zones/{ZoneId}/dns_records")]
     Task CreateDnsRecord(
         [Header("Authorization")] string authToken,
@@ -140,10 +140,6 @@ public interface ICloudflareClient
 
     #endregion
 }
-
-public sealed record Policy(
-    [property: JsonPropertyName("id")] string Id,
-    [property: JsonPropertyName("name")] string Name);
 
 public static class IApiResponseExtensions
 {
