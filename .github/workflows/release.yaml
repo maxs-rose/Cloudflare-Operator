@@ -66,12 +66,10 @@ jobs:
         run: dotnet kubeops g op --out config cloudflared-operator CloudflareOperator/CloudflareOperator.csproj
       - name: Update Image
         run: sed -i 's/accessible-docker-image/ghcr.io\/${{ env.IMAGE_PATH }}\/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}/g' config/kustomization.yaml
+      - name: Install kubectl
+        run: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
       - name: Build Deployment
-        uses: karancode/kustomize-github-action@v1.3.2
-        with:
-          kustomize_version: 5.4.3
-          kustomize_build_dir: config
-          kustomize_output_file: config/bundle.yaml
+        run: kubectl kustomize ./config > ./config/bundle.yaml
       - name: Attach Deployment
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
