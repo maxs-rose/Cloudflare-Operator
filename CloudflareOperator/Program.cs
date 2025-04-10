@@ -5,7 +5,7 @@ using KubeOps.Operator;
 using Refit;
 using Serilog;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSerilog((ctx, configuration) =>
 {
