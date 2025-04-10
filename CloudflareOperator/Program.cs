@@ -1,11 +1,15 @@
 using CloudflareOperator.Clients;
+using CloudflareOperator.Configuration;
 using CloudflareOperator.Services;
 using CloudflareOperator.Watchers;
 using KubeOps.Operator;
+using Microsoft.Extensions.Options;
 using Refit;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<CloudflareConfiguration>(builder.Configuration.GetSection(CloudflareConfiguration.ConfigurationSection));
 
 builder.Services.AddSerilog((ctx, configuration) =>
 {
@@ -16,7 +20,7 @@ builder.Services.AddSerilog((ctx, configuration) =>
 
 builder.Services
     .AddRefitClient<ICloudflareClient>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri("https://api.cloudflare.com/client/v4"));
+    .ConfigureHttpClient((ctx, c) => c.BaseAddress = ctx.GetRequiredService<IOptions<CloudflareConfiguration>>().Value.ApiUrl);
 
 builder.Services
     .AddHostedService<RemoteTunnelWatcher>()
@@ -34,6 +38,6 @@ builder.Services
     .AddKubernetesOperator()
     .RegisterComponents();
 
-using var app = builder.Build();
+await using var app = builder.Build();
 
 await app.RunAsync();

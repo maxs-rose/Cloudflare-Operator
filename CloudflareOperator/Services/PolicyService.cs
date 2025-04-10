@@ -1,14 +1,18 @@
 using System.Collections.Immutable;
 using CloudflareOperator.Clients;
+using CloudflareOperator.Configuration;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace CloudflareOperator.Services;
 
 internal sealed class PolicyService(
     ICloudflareClient cloudflareClient,
-    IMemoryCache cache
-)
+    IMemoryCache cache,
+    IOptions<CloudflareConfiguration> cloudflareOptions)
 {
+    private readonly CloudflareConfiguration _cloudflare = cloudflareOptions.Value;
+
     public async Task<bool> HasPolicy(string authToken, string accountId, string policyName)
     {
         var policies = await GetPolicies(authToken, accountId);
@@ -45,7 +49,7 @@ internal sealed class PolicyService(
                     policies[policy.Name] = policy.Id;
             }
 
-            entity.SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+            entity.SetAbsoluteExpiration(_cloudflare.PolicyCacheTime);
 
             return policies.ToImmutableDictionary();
         })!;
