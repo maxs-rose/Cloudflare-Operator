@@ -10,7 +10,6 @@ using KubeOps.Abstractions.Finalizer;
 using KubeOps.Abstractions.Queue;
 using KubeOps.Abstractions.Rbac;
 using KubeOps.KubernetesClient;
-using Microsoft.Extensions.Logging;
 
 namespace CloudflareOperator.Controllers;
 
@@ -20,6 +19,7 @@ internal sealed class AccessApplicationController(
     IKubernetesClient client,
     ICloudflareClient cloudflareClient,
     ApiTokenService apiTokenService,
+    PolicyService policyService,
     EntityRequeue<V1AccessApplication> requeue,
     EntityFinalizerAttacher<V1AccessApplicationFinalizer, V1AccessApplication> finalizerAttacher
 ) : IEntityController<V1AccessApplication>
@@ -71,7 +71,8 @@ internal sealed class AccessApplicationController(
                 {
                     AppLauncherVisible = entity.Spec.VisibleInLauncher,
                     LogoUrl = entity.Spec.LogoUrl,
-                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray()
+                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray(),
+                    Policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies)
                 },
                 cancellationToken)
             .GetResponseContent();
@@ -99,7 +100,8 @@ internal sealed class AccessApplicationController(
                 {
                     AppLauncherVisible = entity.Spec.VisibleInLauncher,
                     LogoUrl = entity.Spec.LogoUrl,
-                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray()
+                    Destinations = domains.Select(x => new ApplicationDestination(x)).ToImmutableArray(),
+                    Policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies)
                 },
                 cancellationToken)
             .GetResponseContent();

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using CloudflareOperator.Clients.Models;
 using Refit;
 
@@ -17,7 +18,22 @@ public interface ICloudflareClient
 
     #endregion Zone
 
+    #region Policy
+
+    // https://developers.cloudflare.com/api/resources/zero_trust/subresources/access/subresources/policies/
+
+    [Get("/accounts/{AccountId}/access/policies")]
+    Task<IApiResponse<ResponseEnvelope<ImmutableArray<Policy>?>>> GetPolicies(
+        [Header("Authorization")] string authToken,
+        [AliasAs("AccountId")] string accountId,
+        [Query] [AliasAs("page")] int page,
+        CancellationToken cancellationToken = default);
+
+    #endregion Policy
+
     #region Application
+    
+    // https://developers.cloudflare.com/api/resources/zero_trust/subresources/access/subresources/applications/
 
     [Post("/accounts/{AccountId}/access/apps")]
     Task<IApiResponse<ResponseEnvelope<Application>>> CreateApplication(
