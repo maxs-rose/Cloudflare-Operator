@@ -1,0 +1,94 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: operator-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - strive.io
+  resources:
+  - accessapplications
+  verbs:
+  - '*'
+- apiGroups:
+  - strive.io
+  resources:
+  - tunnels
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - watch
+  - create
+  - delete
+- apiGroups:
+  - strive.io
+  resources:
+  - tunnelaccesss
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - create
+  - update
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - '*'
+- apiGroups:
+  - strive.io
+  resources:
+  - accessapplications/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - strive.io
+  resources:
+  - tunnels/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - services/status
+  verbs:
+  - get
+  - update
+  - patch
