@@ -62,7 +62,7 @@ jobs:
       - name: Restore
         run: dotnet restore && dotnet tool restore
       - name: Build Operator Config
-        run: dotnet kubeops g op --out config cloudflared-operator CloudflaredOperator/CloudflaredOperator.csproj
+        run: dotnet kubeops g op --out config cloudflared-operator CloudflareOperator/CloudflareOperator.csproj
       - name: Update Image
         run: sed -i 's/accessible-docker-image/ghcr.io\/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}/g' config/kustomization.yaml
       - name: Build Deployment
