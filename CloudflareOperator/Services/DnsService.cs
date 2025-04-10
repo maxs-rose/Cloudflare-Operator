@@ -143,7 +143,7 @@ internal sealed class DnsService(
 
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
 
-            return (zones.Result ?? []).FirstOrDefault(z => Equals(domain, StringComparison.InvariantCultureIgnoreCase))?.Id ?? string.Empty;
+            return (zones.Result ?? []).FirstOrDefault(z => string.Equals(z.Name, domain, StringComparison.InvariantCultureIgnoreCase))?.Id ?? string.Empty;
         })!;
     }
 
