@@ -19,6 +19,3 @@ public sealed class V1TunnelAccess : CustomKubernetesEntity<V1TunnelAccess.Tunne
 
     public sealed record TunnelTarget([property: Required] string Name, [property: Required] string Host, [property: Required] int Port);
 }
-
-// b94aa7de9708967e0842e3a1a32c6bc6
-// 0bc02bd3ce9772ca70756d19f9df91dc78889ac4a1020e004cc8799a73f9cc8f
