@@ -1,0 +1,79 @@
+name: Release
+on:
+  push:
+    branches: ["main"]
+
+env:
+  IMAGE_NAME: maxs-rose/cloudflared-operator
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        name: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: simple
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+  publish:
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+    needs: release-please
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Extract metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}
+          tags: type=raw,value=${{ needs.release-please.outputs.tag_name }}
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./CloudflareOperator/Dockerfile
+          push: true
+          provenance: mode=max
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore && dotnet tool restore
+      - name: Build Operator Config
+        run: dotnet kubeops g op --out config cloudflared-operator CloudflaredOperator/CloudflaredOperator.csproj
+      - name: Update Image
+        run: sed -i 's/accessible-docker-image/ghcr.io\/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}/g' config/kustomization.yaml
+      - name: Build Deployment
+        uses: karancode/kustomize-github-action@v1.3.2
+        with:
+          kustomize_version: 5.4.3
+          kustomize_build_dir: config
+          kustomize_output_file: config/bundle.yaml
+      - name: Attach Deployment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ steps.release.outputs.tag_name }} ./config/bundle.yaml
+
