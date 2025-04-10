@@ -6,14 +6,12 @@ on:
 env:
   IMAGE_NAME: maxs-rose/cloudflared-operator
 
-permissions:
-  contents: write
-  pull-requests: write
-  packages: write
-
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -26,6 +24,7 @@ jobs:
           release-type: simple
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          skip-labeling: true
   publish:
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
