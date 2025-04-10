@@ -23,7 +23,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
           config-file: release-please-config.json
-          skip-labeling: true
+          skip-labeling: false
   publish:
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
