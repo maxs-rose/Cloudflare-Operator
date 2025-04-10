@@ -4,7 +4,8 @@ on:
     branches: ["main"]
 
 env:
-  IMAGE_NAME: maxs-rose/cloudflared-operator
+  IMAGE_PATH: maxs-rose
+  IMAGE_NAME: cloudflared-operator
 
 jobs:
   release-please:
@@ -45,7 +46,7 @@ jobs:
       - name: Extract metadata
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}
+          images: ghcr.io/${{ env.IMAGE_PATH }}/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}
           tags: type=raw,value=${{ needs.release-please.outputs.tag_name }}
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
@@ -54,7 +55,7 @@ jobs:
           file: ./CloudflareOperator/Dockerfile
           push: true
           provenance: mode=max
-          tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}
+          tags: ghcr.io/${{ env.IMAGE_PATH }}/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -64,7 +65,7 @@ jobs:
       - name: Build Operator Config
         run: dotnet kubeops g op --out config cloudflared-operator CloudflareOperator/CloudflareOperator.csproj
       - name: Update Image
-        run: sed -i 's/accessible-docker-image/ghcr.io\/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}/g' config/kustomization.yaml
+        run: sed -i 's/accessible-docker-image/ghcr.io\/${{ env.IMAGE_PATH }}\/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}/g' config/kustomization.yaml
       - name: Build Deployment
         uses: karancode/kustomize-github-action@v1.3.2
         with:
