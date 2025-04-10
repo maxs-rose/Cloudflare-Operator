@@ -75,5 +75,5 @@ jobs:
       - name: Attach Deployment
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ steps.release.outputs.tag_name }} ./config.bundle.yaml
+        run: gh release upload ${{ steps.release.outputs.tag_name }} ./config/bundle.yaml
 
