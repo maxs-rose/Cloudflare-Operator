@@ -92,8 +92,6 @@ internal sealed class AccessApplicationController(
     {
         var (primaryDomain, domains) = entity.Spec.Domains;
 
-        var policies = await policyService.GetPolicies(apiToken, entity.Spec.AccountId, entity.Spec.AccessPolicies);
-
         var application = await cloudflareClient.UpdateApplication(
                 apiToken,
                 entity.Spec.AccountId,
