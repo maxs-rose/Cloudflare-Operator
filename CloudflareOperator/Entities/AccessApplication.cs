@@ -11,7 +11,10 @@ public sealed class V1AccessApplication : CustomKubernetesEntity<V1AccessApplica
 {
     public sealed class AccessApplicationSpec
     {
-        [Required] public string Name { get; init; } = string.Empty;
+        [Required]
+        [AdditionalPrinterColumn(name: "Application Name")]
+        public string Name { get; init; } = string.Empty;
+
         [Required] public ImmutableArray<string> Domains { get; init; }
 
         [Required] public string AccountId { get; init; } = string.Empty;
@@ -24,7 +27,10 @@ public sealed class V1AccessApplication : CustomKubernetesEntity<V1AccessApplica
 
     public sealed class AccessApplicationStatus
     {
+        [AdditionalPrinterColumn(name: "Status")]
         public Status Status { get; set; } = Status.Uninitialized;
+
+        [AdditionalPrinterColumn(name: "Application ID")]
         public string ApplicationId { get; set; } = string.Empty;
     }
 }
