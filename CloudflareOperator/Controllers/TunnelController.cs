@@ -70,6 +70,8 @@ internal sealed class TunnelController(
                     requeue(entity, TimeSpan.FromMilliseconds(10));
                     break;
                 case TunnelState.Done:
+                    await DeployTunnel(entity, cancellationToken, false);
+
                     await dnsService.UpdateTunnelDns(
                         apiToken,
                         entity.Spec.AccountId,
@@ -160,14 +162,15 @@ internal sealed class TunnelController(
         entity.Status.Messages = [];
     }
 
-    private async Task DeployTunnel(V1Tunnel entity, CancellationToken cancellationToken)
+    private async Task DeployTunnel(V1Tunnel entity, CancellationToken cancellationToken, bool delete = true)
     {
-        await tunnelDeploymentService.Delete(entity, entity.Spec.ResourceNamespace, cancellationToken);
+        if (delete)
+            await tunnelDeploymentService.Delete(entity, entity.Spec.ResourceNamespace, cancellationToken);
 
         await tunnelDeploymentService.DeployTunnel(
             entity,
             entity.Spec.ResourceNamespace,
-            "cloudflare/cloudflared:2025.2.0",
+            entity.Spec.Image,
             new V1SecretKeySelector
             {
                 Name = entity.Name(),
@@ -176,8 +179,11 @@ internal sealed class TunnelController(
             },
             cancellationToken);
 
-        entity.Status.Status = TunnelState.Done;
-        entity.Status.Messages = [];
+        if (entity.Status.Status != TunnelState.Done)
+        {
+            entity.Status.Status = TunnelState.Done;
+            entity.Status.Messages = [];
+        }
     }
 
     private async Task DeleteDnsEntries(V1Tunnel entity, string apiToken, CancellationToken cancellationToken)

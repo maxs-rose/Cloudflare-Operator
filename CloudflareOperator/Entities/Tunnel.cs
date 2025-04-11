@@ -17,6 +17,7 @@ public sealed class V1Tunnel : CustomKubernetesEntity<V1Tunnel.TunnelSpec, V1Tun
         [Required] public string AccountId { get; set; } = string.Empty;
         [Required] public SecretReference ApiToken { get; set; } = null!;
         [Required] public string ResourceNamespace { get; set; } = string.Empty;
+        public string Image { get; init; } = "cloudflare/cloudflared:2025.2.0";
 
         public List<TunnelDnsEntry> Dns { get; set; } = [];
     }
