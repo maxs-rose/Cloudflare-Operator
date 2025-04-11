@@ -1,11 +1,11 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 as build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /operator
 
 COPY ./ ./
 RUN dotnet publish -c Release /p:AssemblyName=operator -o out CloudflareOperator/CloudflareOperator.csproj
 
 # The runner for the application
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 as final
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 
 RUN addgroup k8s-operator && useradd -G k8s-operator operator-user
 
