@@ -12,6 +12,7 @@ public sealed class V1TunnelAccess : CustomKubernetesEntity<V1TunnelAccess.Tunne
     public sealed class TunnelAccessSpec
     {
         public ImmutableArray<TunnelTarget> Targets { get; init; } = [];
+        public string Image { get; init; } = "cloudflare/cloudflared:2025.2.0";
 
         [Required] public V1SecretKeySelector AccessTokenRef { get; init; } = null!;
         [Required] public V1SecretKeySelector SecretAccessTokenRef { get; init; } = null!;

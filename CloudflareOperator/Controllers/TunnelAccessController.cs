@@ -21,7 +21,7 @@ internal sealed class TunnelAccessController(
                 entity,
                 $"{entity.Name()}-{target.Name}",
                 entity.Namespace(),
-                "cloudflare/cloudflared:2025.2.0",
+                entity.Spec.Image,
                 target,
                 entity.Spec.AccessTokenRef,
                 entity.Spec.SecretAccessTokenRef,
