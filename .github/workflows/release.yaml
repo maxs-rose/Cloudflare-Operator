@@ -25,11 +25,11 @@ jobs:
           release-type: simple
           config-file: release-please-config.json
           skip-labeling: false
-  publish:
+  publish-docker:
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       attestations: write
     needs: release-please
@@ -58,6 +58,14 @@ jobs:
           push: true
           provenance: mode=max
           tags: ghcr.io/${{ env.IMAGE_PATH }}/${{ env.IMAGE_NAME }}:${{ needs.release-please.outputs.tag_name }}
+  publish-manifest:
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: release-please
+    steps:
+      - uses: actions/checkout@v4
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -78,4 +86,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ needs.release-please.outputs.tag_name }} ./config/bundle.yaml
-
