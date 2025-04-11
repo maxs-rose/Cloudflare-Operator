@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/maxs-rose/Cloudflare-Operator/compare/v1.0.0...v1.1.0) (2025-04-11)
+
+
+### Features
+
+* Add additional printer columns to resources ([#16](https://github.com/maxs-rose/Cloudflare-Operator/issues/16)) ([547fb25](https://github.com/maxs-rose/Cloudflare-Operator/commit/547fb251f824ac500f6e9ff90191a484953129c8))
+* Allow specification of docker image in tunnel/application crds ([#18](https://github.com/maxs-rose/Cloudflare-Operator/issues/18)) ([6bb8f56](https://github.com/maxs-rose/Cloudflare-Operator/commit/6bb8f56e2fc2b6f2fcc4839d84c3bfe513cfed69))
+* Build multi platform docker image ([3d5a98f](https://github.com/maxs-rose/Cloudflare-Operator/commit/3d5a98fddae911b6f72afa9cbc4d01cf16091c5d))
+
+
+### Bug Fixes
+
+* Remove arm/v7 build as .NET does not support it ([b08903a](https://github.com/maxs-rose/Cloudflare-Operator/commit/b08903ad42fc824a067159bf4d4bd0a19a964377))
+
 ## 1.0.0 (2025-04-10)
 
 
