@@ -23,8 +23,12 @@ public sealed class V1Tunnel : CustomKubernetesEntity<V1Tunnel.TunnelSpec, V1Tun
 
     public sealed class TunnelStatus
     {
+        [AdditionalPrinterColumn(name: "Status")]
         public TunnelState Status { get; set; } = TunnelState.Uninitialized;
+
         public List<string> Messages { get; set; } = [];
+
+        [AdditionalPrinterColumn(name: "Tunnel ID")]
         public string TunnelId { get; set; } = string.Empty;
     }
 }
